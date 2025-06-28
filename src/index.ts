@@ -2,7 +2,12 @@ import type { Stats } from "node:fs";
 import { stat } from "node:fs/promises";
 import { handleCompression } from "./compression.js";
 import { generateETag, getCacheControl, getMimeType } from "./content-utils.js";
-import { checkForSymlink, handleDirectoryRequest, resolveFilePath, shouldServeDotfile } from "./fs-utils.js";
+import {
+  checkForSymlink,
+  handleDirectoryRequest,
+  resolveFilePath,
+  shouldServeDotfile,
+} from "./fs-utils.js";
 import { handleConditionalRequests, handleRangeRequest } from "./http-utils.js";
 import { createBufferedResponse, createStreamingResponse } from "./response.js";
 import { FileServerError, validateFileServerOptions } from "./validators.js";
@@ -93,8 +98,8 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
   const supportedEncodings = Array.isArray(config.compression)
     ? config.compression
     : config.compression
-    ? ["br", "gzip", "deflate"]
-    : [];
+      ? ["br", "gzip", "deflate"]
+      : [];
 
   return async (request: Request): Promise<Response> => {
     // Only handle GET and HEAD requests
@@ -132,7 +137,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
           404,
           filePath,
           "file_stat",
-          cause instanceof Error ? cause : new Error(String(cause))
+          cause instanceof Error ? cause : new Error(String(cause)),
         );
 
         return new Response(error.message, { status: error.statusCode });
@@ -158,7 +163,12 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
       }
 
       // Check for compression support and pre-compressed files
-      const compressionResult = await handleCompression(filePath, request, supportedEncodings, config.precompressed);
+      const compressionResult = await handleCompression(
+        filePath,
+        request,
+        supportedEncodings,
+        config.precompressed,
+      );
       const finalFilePath = compressionResult.finalFilePath;
       const contentEncoding = compressionResult.contentEncoding;
 
@@ -185,7 +195,12 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
       const rangeRequest = rangeResult.rangeRequest;
 
       // Check conditional requests
-      const conditionalResponse = handleConditionalRequests(request, fileStats, etagValue, config.headers);
+      const conditionalResponse = handleConditionalRequests(
+        request,
+        fileStats,
+        etagValue,
+        config.headers,
+      );
 
       if (conditionalResponse) {
         return conditionalResponse;
@@ -228,14 +243,22 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
             fileStats,
             isHeadRequest,
             status,
-            responseHeaders
+            responseHeaders,
           );
         } else {
-          return await createBufferedResponse(finalFilePath, rangeRequest, isHeadRequest, status, responseHeaders);
+          return await createBufferedResponse(
+            finalFilePath,
+            rangeRequest,
+            isHeadRequest,
+            status,
+            responseHeaders,
+          );
         }
       } catch (cause) {
         const errorCode = config.streaming ? "STREAM_READ_ERROR" : "BUFFER_READ_ERROR";
-        const errorMessage = config.streaming ? "Failed to open file for streaming" : "Failed to read file into memory";
+        const errorMessage = config.streaming
+          ? "Failed to open file for streaming"
+          : "Failed to read file into memory";
         const operation = config.streaming ? "file_stream" : "file_buffer";
 
         const error = new FileServerError(
@@ -244,7 +267,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
           500,
           finalFilePath,
           operation,
-          cause instanceof Error ? cause : new Error(String(cause))
+          cause instanceof Error ? cause : new Error(String(cause)),
         );
 
         return new Response(error.message, { status: error.statusCode });
@@ -256,7 +279,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
         500,
         undefined,
         "request_processing",
-        cause instanceof Error ? cause : new Error(String(cause))
+        cause instanceof Error ? cause : new Error(String(cause)),
       );
 
       return new Response(error.message, { status: error.statusCode });

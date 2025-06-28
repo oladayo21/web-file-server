@@ -12,7 +12,9 @@
       "Bash(mkdir:*)",
       "Bash(grep:*)",
       "Bash(pnpm test:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
