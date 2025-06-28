@@ -33,6 +33,11 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Configure npm authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+
       - name: Install dependencies
         run: pnpm install
 
@@ -47,6 +52,14 @@ jobs:
         run: |
           NEW_VERSION=$(pnpm version ${{ github.event.inputs.release_type }} --no-git-tag-version)
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          # Determine if this is a prerelease
+          if [[ "$NEW_VERSION" == *"-"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "tag=beta" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit version bump
         run: |
@@ -56,9 +69,12 @@ jobs:
           git commit -m "Release ${{ steps.version.outputs.new_version }}"
 
       - name: Publish to npm
-        run: pnpm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [[ "${{ steps.version.outputs.is_prerelease }}" == "true" ]]; then
+            pnpm publish --access public --tag ${{ steps.version.outputs.tag }}
+          else
+            pnpm publish --access public
+          fi
 
       - name: Create Git tag and push
         run: |
