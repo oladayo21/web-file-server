@@ -48,16 +48,19 @@ jobs:
           NEW_VERSION=$(pnpm version ${{ github.event.inputs.release_type }} --no-git-tag-version)
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Publish to npm
-        run: pnpm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create Git tag and commit
+      - name: Commit version bump
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add package.json
           git commit -m "Release ${{ steps.version.outputs.new_version }}"
+
+      - name: Publish to npm
+        run: pnpm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Git tag and push
+        run: |
           git tag ${{ steps.version.outputs.new_version }}
           git push origin main --tags
