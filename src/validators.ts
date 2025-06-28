@@ -3,10 +3,10 @@ import type { FileServerOptions } from "./index.js";
 
 /**
  * Custom error class for file server operations.
- * 
+ *
  * Provides structured error information including error codes,
  * HTTP status codes, file paths, and operation context.
- * 
+ *
  * @example
  * ```typescript
  * try {
@@ -23,7 +23,7 @@ import type { FileServerOptions } from "./index.js";
 export class FileServerError extends Error {
   /**
    * Creates a new FileServerError.
-   * 
+   *
    * @param code - Machine-readable error code (e.g., 'FILE_NOT_FOUND', 'INVALID_CONFIG')
    * @param message - Human-readable error message
    * @param statusCode - HTTP status code to return to client
@@ -157,13 +157,13 @@ function validateIndexFiles(index: string[] | undefined): void {
 
 /**
  * Validates file server configuration options.
- * 
+ *
  * Performs comprehensive validation of all configuration options,
  * ensuring the server can start safely with the provided settings.
- * 
+ *
  * @param options - The configuration options to validate
  * @throws {FileServerError} When validation fails for any option
- * 
+ *
  * @example
  * ```typescript
  * try {

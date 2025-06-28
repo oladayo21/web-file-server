@@ -7,8 +7,6 @@ import { handleConditionalRequests, handleRangeRequest } from "./http-utils.js";
 import { createBufferedResponse, createStreamingResponse } from "./response.js";
 import { FileServerError, validateFileServerOptions } from "./validators.js";
 
-export { FileServerError };
-
 /**
  * Configuration options for the file server.
  *
@@ -84,19 +82,6 @@ const DEFAULT_OPTIONS = {
  *   compression: true,
  *   etag: true
  * });
- *
- * // Use with Node.js http server
- * const server = createServer(async (req, res) => {
- *   const request = new Request(`http://localhost${req.url}`, {
- *     method: req.method,
- *     headers: req.headers
- *   });
- *   const response = await handler(request);
- *   // ... convert response back to Node.js format
- * });
- *
- * // Or use with modern runtimes directly
- * Deno.serve(handler);
  * ```
  */
 export function createFileServer(options: FileServerOptions): FileServerHandler {
@@ -136,13 +121,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
         return new Response("Not Found", { status: 404 });
       }
 
-      // Check for symlinks and deny them for security
-      const symlinkError = checkForSymlink(filePath);
-      if (symlinkError) {
-        return new Response(symlinkError.message, { status: symlinkError.statusCode });
-      }
-
-      // Check if file exists and get stats
+      // Check if file exists and get stats first
       let fileStats: Stats;
       try {
         fileStats = await stat(filePath);
@@ -155,15 +134,25 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
           "file_stat",
           cause instanceof Error ? cause : new Error(String(cause))
         );
+
         return new Response(error.message, { status: error.statusCode });
+      }
+
+      // Check for symlinks and deny them for security (only after we know file exists)
+      const symlinkError = checkForSymlink(filePath);
+
+      if (symlinkError) {
+        return new Response(symlinkError.message, { status: symlinkError.statusCode });
       }
 
       // If it's a directory, try to serve index files
       if (fileStats.isDirectory()) {
         const { indexPath, indexStats } = await handleDirectoryRequest(filePath, config.index);
+
         if (!indexPath || !indexStats) {
           return new Response("Not Found", { status: 404 });
         }
+
         filePath = indexPath;
         fileStats = indexStats;
       }
@@ -180,6 +169,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
 
       // Generate ETag if enabled (use final file path for ETag)
       let etagValue: string | undefined;
+
       if (config.etag) {
         const isWeak = config.etag === "weak";
         etagValue = generateETag(fileStats, filePath, isWeak);
@@ -187,13 +177,16 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
 
       // Check for range requests
       const rangeResult = handleRangeRequest(request, fileStats, etagValue, config.headers);
+
       if (rangeResult.rangeResponse) {
         return rangeResult.rangeResponse;
       }
+
       const rangeRequest = rangeResult.rangeRequest;
 
       // Check conditional requests
       const conditionalResponse = handleConditionalRequests(request, fileStats, etagValue, config.headers);
+
       if (conditionalResponse) {
         return conditionalResponse;
       }
@@ -253,6 +246,7 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
           operation,
           cause instanceof Error ? cause : new Error(String(cause))
         );
+
         return new Response(error.message, { status: error.statusCode });
       }
     } catch (cause) {
@@ -264,9 +258,10 @@ export function createFileServer(options: FileServerOptions): FileServerHandler 
         "request_processing",
         cause instanceof Error ? cause : new Error(String(cause))
       );
+
       return new Response(error.message, { status: error.statusCode });
     }
   };
 }
 
-export default createFileServer;
+export { FileServerError };

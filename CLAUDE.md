@@ -30,6 +30,7 @@ This project follows a **phase-by-phase collaborative implementation approach**.
 Before committing and pushing changes, always run:
 1. `pnpm check:fix` - Fix all linting and formatting issues
 2. `pnpm build` - Ensure the build succeeds
+- Always run the necessary checks (test, lint, formatting) before committing changes
 
 ## Architecture
 

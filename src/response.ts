@@ -4,10 +4,10 @@ import type { parseRange } from "./http-utils.js";
 
 /**
  * Creates a streaming HTTP response for efficient file serving.
- * 
+ *
  * Uses ReadableStream to serve files without loading them entirely into memory,
  * making it suitable for large files and better server memory usage.
- * 
+ *
  * @param filePath - Path to the file to serve
  * @param rangeRequest - Parsed range request info, or null for full file
  * @param fileStats - File statistics (used for calculating positions)
@@ -15,7 +15,7 @@ import type { parseRange } from "./http-utils.js";
  * @param status - HTTP status code for the response
  * @param headers - HTTP headers to include in the response
  * @returns Promise resolving to a streaming Response
- * 
+ *
  * @example
  * ```typescript
  * const response = await createStreamingResponse(
@@ -80,17 +80,17 @@ export async function createStreamingResponse(
 
 /**
  * Creates a buffered HTTP response by loading the entire file into memory.
- * 
+ *
  * More suitable for smaller files where the memory usage is acceptable
  * and the simplicity of buffered reading is preferred over streaming.
- * 
+ *
  * @param filePath - Path to the file to serve
  * @param rangeRequest - Parsed range request info, or null for full file
  * @param isHeadRequest - Whether this is a HEAD request (no body)
  * @param status - HTTP status code for the response
  * @param headers - HTTP headers to include in the response
  * @returns Promise resolving to a buffered Response
- * 
+ *
  * @example
  * ```typescript
  * const response = await createBufferedResponse(

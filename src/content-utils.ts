@@ -4,7 +4,7 @@ import { extname } from "node:path";
 
 /**
  * MIME type mapping for common file extensions.
- * 
+ *
  * Provides content-type detection for static files based on their extensions.
  * Falls back to 'application/octet-stream' for unknown file types.
  */
@@ -51,10 +51,10 @@ export const MIME_TYPES: Record<string, string> = {
 
 /**
  * Determines the MIME type for a file based on its extension.
- * 
+ *
  * @param filePath - The file path to determine the MIME type for
  * @returns The MIME type string, or 'application/octet-stream' for unknown types
- * 
+ *
  * @example
  * ```typescript
  * getMimeType('/public/style.css'); // Returns 'text/css'
@@ -69,15 +69,15 @@ export function getMimeType(filePath: string): string {
 
 /**
  * Generates an ETag header value for cache validation.
- * 
+ *
  * Creates a hash-based ETag using file size, modification time, and path.
  * Supports both weak and strong ETags for different caching strategies.
- * 
+ *
  * @param stats - File statistics containing size and modification time
  * @param filePath - The file path to include in the ETag calculation
  * @param weak - Whether to generate a weak ETag (prefixed with 'W/')
  * @returns The ETag header value
- * 
+ *
  * @example
  * ```typescript
  * generateETag(fileStats, '/app.js', false); // Returns '"abc123def456789"'
@@ -95,19 +95,19 @@ export function generateETag(stats: Stats, filePath: string, weak = false): stri
 
 /**
  * Determines the appropriate Cache-Control header for a file.
- * 
+ *
  * Supports both global cache control settings and pattern-based
  * rules for different file types.
- * 
+ *
  * @param filePath - The file path to determine cache control for
  * @param cacheControl - Cache control configuration (string or pattern mapping)
  * @returns The Cache-Control header value, or undefined if not configured
- * 
+ *
  * @example
  * ```typescript
  * // Global cache control
  * getCacheControl('/app.js', 'max-age=3600'); // Returns 'max-age=3600'
- * 
+ *
  * // Pattern-based cache control
  * const patterns = {
  *   '\\.js$': 'max-age=3600',

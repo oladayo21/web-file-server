@@ -6,14 +6,14 @@ import { FileServerError } from "./validators.js";
 
 /**
  * Resolves and validates a file path against the server root directory.
- * 
+ *
  * Performs security validation to prevent path traversal attacks and
  * ensures all file access stays within the configured root directory.
- * 
+ *
  * @param pathname - The URL pathname from the HTTP request
  * @param root - The root directory to serve files from
  * @returns Object containing the resolved file path and validation status
- * 
+ *
  * @example
  * ```typescript
  * const { filePath, isValid } = resolveFilePath('/app.js', '/var/www');
@@ -55,13 +55,13 @@ export function resolveFilePath(
 
 /**
  * Checks if a file path is a symbolic link and blocks access for security.
- * 
+ *
  * Symbolic links are denied to prevent access to files outside the
  * configured root directory, which could be a security vulnerability.
- * 
+ *
  * @param filePath - The file path to check for symbolic links
  * @returns FileServerError if symlink detected or check failed, null if safe
- * 
+ *
  * @example
  * ```typescript
  * const error = checkForSymlink('/var/www/suspicious-link');
@@ -95,14 +95,14 @@ export function checkForSymlink(filePath: string): FileServerError | null {
 
 /**
  * Determines whether dotfiles should be served based on policy.
- * 
+ *
  * Dotfiles (files starting with '.') often contain sensitive configuration
  * data and may need special handling based on server policy.
- * 
+ *
  * @param filePath - The file path to check
  * @param dotfiles - The dotfile serving policy ('allow', 'deny', or 'ignore')
  * @returns True if the file should be served, false otherwise
- * 
+ *
  * @example
  * ```typescript
  * shouldServeDotfile('/.env', 'deny');   // Returns false
@@ -114,8 +114,9 @@ export function shouldServeDotfile(
   filePath: string,
   dotfiles: "allow" | "deny" | "ignore",
 ): boolean {
-  const fileName = filePath.split("/").pop() || "";
-  const isDotfile = fileName.startsWith(".");
+  // Check if any part of the path is a dotfile
+  const pathParts = filePath.split("/").filter((part) => part !== "");
+  const isDotfile = pathParts.some((part) => part.startsWith("."));
 
   if (!isDotfile) return true;
 
@@ -133,14 +134,14 @@ export function shouldServeDotfile(
 
 /**
  * Handles directory requests by looking for index files.
- * 
+ *
  * When a directory is requested, searches for configured index files
  * (like index.html) to serve instead of showing directory contents.
- * 
+ *
  * @param filePath - The directory path being requested
  * @param indexFiles - Array of index filenames to search for
  * @returns Object containing the found index file path and stats, if any
- * 
+ *
  * @example
  * ```typescript
  * const { indexPath, indexStats } = await handleDirectoryRequest(

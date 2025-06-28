@@ -3,13 +3,13 @@ import { FileServerError } from "./validators.js";
 
 /**
  * Sanitizes HTTP header values to prevent injection attacks.
- * 
+ *
  * Removes dangerous characters (null bytes, CRLF) and enforces
  * length limits to prevent header injection and DoS attacks.
- * 
+ *
  * @param value - The raw header value to sanitize
  * @returns Sanitized header value, or null if input was null
- * 
+ *
  * @example
  * ```typescript
  * const clean = sanitizeHeader('value\r\nX-Injected: evil');
@@ -17,7 +17,8 @@ import { FileServerError } from "./validators.js";
  * ```
  */
 export function sanitizeHeader(value: string | null): string | null {
-  if (!value) return null;
+  if (value === null || value === undefined) return null;
+  if (value === "") return "";
 
   // Remove any null bytes, carriage returns, and line feeds to prevent header injection
   const sanitized = value.replaceAll("\x00", "").replaceAll("\r", "").replaceAll("\n", "");
@@ -33,15 +34,15 @@ export function sanitizeHeader(value: string | null): string | null {
 
 /**
  * Parses HTTP Range header for partial content requests.
- * 
+ *
  * Supports various range formats: suffix ranges (-500), start ranges (500-),
  * and full ranges (500-1000). Validates ranges against file size.
- * 
+ *
  * @param rangeHeader - The Range header value (without 'bytes=' prefix)
  * @param fileSize - The total size of the file being requested
  * @returns Parsed range information, or null if invalid
  * @throws {FileServerError} When multiple ranges are requested (not supported)
- * 
+ *
  * @example
  * ```typescript
  * parseRange('500-1000', 2000); // Returns { start: 500, end: 1000, contentLength: 501 }
@@ -73,6 +74,12 @@ export function parseRange(
 
   const range = ranges[0]?.trim();
   if (!range) return null;
+
+  // Handle malformed ranges with multiple dashes or invalid formats
+  const dashCount = (range.match(/-/g) || []).length;
+  if (dashCount !== 1) {
+    return null; // Invalid range format
+  }
 
   const [startStr, endStr] = range.split("-");
 
@@ -123,19 +130,19 @@ export function parseRange(
 
 /**
  * Parses Accept-Encoding header to find the best supported compression.
- * 
+ *
  * Respects quality values (q-values) in the Accept-Encoding header
  * and returns the highest-quality encoding that the server supports.
- * 
+ *
  * @param acceptEncoding - The Accept-Encoding header value from the client
  * @param supportedEncodings - List of compression algorithms the server supports
  * @returns The best matching encoding, or null if none supported
- * 
+ *
  * @example
  * ```typescript
  * parseAcceptEncoding('gzip;q=0.8, br;q=1.0', ['gzip', 'br']);
  * // Returns 'br' (highest quality)
- * 
+ *
  * parseAcceptEncoding('deflate, gzip', ['gzip']);
  * // Returns 'gzip' (first supported)
  * ```
@@ -150,8 +157,14 @@ export function parseAcceptEncoding(
   const encodings = acceptEncoding
     .split(",")
     .map((enc) => {
-      const [encoding, q = "q=1"] = enc.trim().split(";");
-      const quality = parseFloat(q.replace("q=", "")) || 1;
+      const [encoding, q] = enc.trim().split(";");
+      let quality = 1;
+      if (q) {
+        const qValue = parseFloat(q.replace(/q\s*=\s*/, ""));
+        if (!Number.isNaN(qValue)) {
+          quality = qValue;
+        }
+      }
       return { encoding: encoding.trim(), quality };
     })
     .filter((enc) => enc.quality > 0)
@@ -169,16 +182,16 @@ export function parseAcceptEncoding(
 
 /**
  * Handles conditional HTTP requests for efficient caching.
- * 
+ *
  * Processes If-None-Match (ETag) and If-Modified-Since headers
  * to return 304 Not Modified responses when appropriate.
- * 
+ *
  * @param request - The HTTP request containing conditional headers
  * @param fileStats - File statistics containing modification time
  * @param etagValue - The ETag value for the file, if available
  * @param headers - Additional headers to include in 304 responses
  * @returns 304 Response if conditions match, null to serve full content
- * 
+ *
  * @example
  * ```typescript
  * const response = handleConditionalRequests(request, stats, '"abc123"');
@@ -237,16 +250,16 @@ export function handleConditionalRequests(
 
 /**
  * Handles HTTP Range requests for partial content delivery.
- * 
+ *
  * Processes Range headers and returns appropriate responses for
  * partial content requests, including error responses for invalid ranges.
- * 
+ *
  * @param request - The HTTP request potentially containing a Range header
  * @param fileStats - File statistics containing file size
  * @param etagValue - The ETag value for the file, if available
  * @param headers - Additional headers to include in error responses
  * @returns Object containing parsed range info and optional error response
- * 
+ *
  * @example
  * ```typescript
  * const { rangeRequest, rangeResponse } = handleRangeRequest(request, stats);

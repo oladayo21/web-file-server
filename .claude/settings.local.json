@@ -6,7 +6,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(pnpm build:*)",
-      "Bash(pnpm check:fix:*)"
+      "Bash(pnpm check:fix:*)",
+      "Bash(rg:*)",
+      "Bash(pnpm check:*)",
+      "Bash(mkdir:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm test:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
